@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>knowledge-tools.ai — Turn any codebase into an interactive knowledge experience</title>
+<meta name="description" content="AI agents spend hours analyzing your code to build structured knowledge graphs and interactive visual presentations. Deep understanding, not shallow summaries.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+/* ── Reset & Variables ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --border: #21262d;
+  --text: #e6edf3;
+  --text-dim: #8b949e;
+  --text-muted: #484f58;
+  --blue: #58a6ff;
+  --green: #00ff88;
+  --gold: #ffc858;
+  --red: #f85149;
+  --purple: #d2a8ff;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+code, .mono {
+  font-family: 'Consolas', 'Courier New', monospace;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ── Fixed Nav ── */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(13, 17, 23, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-logo {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.nav-logo span { color: var(--blue); }
+
+.nav-links {
+  display: flex;
+  gap: 28px;
+  list-style: none;
+}
+
+.nav-links a {
+  font-size: 14px;
+  color: var(--text-dim);
+  transition: color 0.2s;
+}
+
+.nav-links a:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.nav-mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+/* ── Hero ── */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 80px 24px 60px;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 780px;
+}
+
+.hero h1 {
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 20px;
+  letter-spacing: -0.02em;
+}
+
+.hero h1 .accent { color: var(--blue); }
+
+.hero-sub {
+  font-size: 20px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  margin-bottom: 36px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-sub em {
+  font-style: normal;
+  color: var(--green);
+}
+
+.hero-ctas {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s;
+  border: none;
+}
+
+.btn-primary {
+  background: var(--blue);
+  color: var(--bg);
+}
+
+.btn-primary:hover {
+  background: #79b8ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(88, 166, 255, 0.3);
+  text-decoration: none;
+  color: var(--bg);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  border-color: var(--blue);
+  transform: translateY(-2px);
+  text-decoration: none;
+  color: var(--text);
+}
+
+/* Hero floating keywords */
+.hero-nodes {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.hero-node {
+  position: absolute;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  border: 1px solid;
+  animation: floatNode 18s ease-in-out infinite;
+}
+
+@keyframes floatNode {
+  0%, 100% { transform: translateY(0) translateX(0); opacity: 0.08; }
+  25% { transform: translateY(-30px) translateX(10px); opacity: 0.15; }
+  50% { transform: translateY(-10px) translateX(-15px); opacity: 0.1; }
+  75% { transform: translateY(-40px) translateX(5px); opacity: 0.18; }
+}
+
+/* ── Section shared ── */
+section {
+  padding: 100px 0;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.section-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--blue);
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.section-desc {
+  font-size: 17px;
+  color: var(--text-dim);
+  max-width: 560px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Scroll-reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Pipeline / How It Works ── */
+#how-it-works {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+}
+
+.pipeline {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  justify-content: center;
+  position: relative;
+}
+
+.pipeline-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 0 0 180px;
+  position: relative;
+}
+
+.pipeline-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  border: 2px solid;
+  background: var(--bg);
+  position: relative;
+}
+
+.pipeline-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.pipeline-stage-label {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.pipeline-stage-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  max-width: 140px;
+}
+
+.pipeline-arrow {
+  flex: 0 0 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  height: 72px;
+  margin-bottom: 34px;
+}
+
+.pipeline-arrow-line {
+  width: 60px;
+  height: 2px;
+  background: var(--border);
+  position: relative;
+}
+
+.pipeline-arrow-line::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: -4px;
+  border: 5px solid transparent;
+  border-left: 7px solid var(--border);
+}
+
+/* Animated dot along arrows */
+.pipeline-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 10px var(--green);
+  animation: pulseDot 3s ease-in-out infinite;
+  top: -3px;
+  left: 0;
+}
+
+@keyframes pulseDot {
+  0% { left: 0; opacity: 1; }
+  80% { left: 52px; opacity: 1; }
+  100% { left: 60px; opacity: 0; }
+}
+
+/* ── Examples ── */
+#examples {
+  border-bottom: 1px solid var(--border);
+}
+
+.examples-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.example-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.example-card:hover {
+  border-color: var(--blue);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(88, 166, 255, 0.1);
+}
+
+.example-card.placeholder {
+  border-style: dashed;
+  opacity: 0.6;
+}
+
+.example-card.placeholder:hover {
+  opacity: 0.9;
+  border-color: var(--gold);
+  box-shadow: 0 8px 30px rgba(255, 200, 88, 0.1);
+}
+
+.example-card .card-accent {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  margin-bottom: 16px;
+}
+
+.example-card .card-status {
+  display: inline-block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 10px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.status-complete { background: rgba(0, 255, 136, 0.12); color: var(--green); }
+.status-in-progress { background: rgba(88, 166, 255, 0.12); color: var(--blue); }
+.status-placeholder { background: rgba(255, 200, 88, 0.1); color: var(--gold); }
+
+.example-card .card-name {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.example-card .card-desc {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.example-card .card-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.example-card .card-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.card-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 14px 0;
+}
+
+.card-output-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.card-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.card-stat {
+  text-align: center;
+}
+
+.card-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.card-stat-label {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--blue);
+  transition: gap 0.2s;
+}
+
+.card-link:hover {
+  gap: 10px;
+  text-decoration: none;
+}
+
+.card-cta-text {
+  font-size: 16px;
+  color: var(--gold);
+  font-weight: 600;
+  margin-top: 12px;
+}
+
+/* ── Features ── */
+#features {
+  border-bottom: 1px solid var(--border);
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.feature-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  transition: all 0.25s;
+}
+
+.feature-card:hover {
+  border-color: var(--blue);
+  transform: translateY(-2px);
+}
+
+.feature-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  font-size: 20px;
+}
+
+.feature-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.feature-card p {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.55;
+}
+
+/* ── CTA / Suggest ── */
+#suggest {
+  text-align: center;
+  padding: 100px 0;
+}
+
+.suggest-box {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 56px 40px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.suggest-box h2 {
+  font-size: 30px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.suggest-box p {
+  font-size: 16px;
+  color: var(--text-dim);
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+.suggest-box .btn-primary {
+  font-size: 18px;
+  padding: 16px 36px;
+}
+
+/* ── Footer ── */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.footer p {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.footer a { color: var(--text-dim); }
+
+/* ── Counter animation ── */
+.counter[data-target] {
+  display: inline-block;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .nav-links.open {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 56px;
+    left: 0;
+    right: 0;
+    background: rgba(13, 17, 23, 0.95);
+    backdrop-filter: blur(12px);
+    padding: 16px 24px;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-mobile-toggle { display: block; }
+
+  .hero h1 { font-size: 32px; }
+  .hero-sub { font-size: 17px; }
+
+  .section-title { font-size: 28px; }
+  .section-desc { font-size: 15px; }
+
+  .pipeline {
+    flex-direction: column;
+    gap: 0;
+  }
+  .pipeline-stage { flex: none; }
+  .pipeline-arrow {
+    transform: rotate(90deg);
+    flex: 0 0 40px;
+    height: 40px;
+    margin-bottom: 0;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .examples-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .suggest-box { padding: 36px 24px; }
+  .suggest-box h2 { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ NAV ══════════════ -->
+<nav class="nav">
+  <div class="nav-logo">knowledge-tools<span>.ai</span></div>
+  <button class="nav-mobile-toggle" aria-label="Menu" onclick="document.querySelector('.nav-links').classList.toggle('open')">&#9776;</button>
+  <ul class="nav-links">
+    <li><a href="#how-it-works">How It Works</a></li>
+    <li><a href="#examples">Examples</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#suggest">Suggest a Project</a></li>
+  </ul>
+</nav>
+
+<!-- ══════════════ HERO ══════════════ -->
+<section class="hero" id="hero">
+  <!-- Floating keyword nodes -->
+  <div class="hero-nodes">
+    <div class="hero-node" style="border-color:var(--blue);color:var(--blue);top:12%;left:8%;animation-delay:0s;">knowledge graph</div>
+    <div class="hero-node" style="border-color:var(--green);color:var(--green);top:22%;right:12%;animation-delay:-3s;">AI agents</div>
+    <div class="hero-node" style="border-color:var(--gold);color:var(--gold);top:55%;left:5%;animation-delay:-6s;">schema validation</div>
+    <div class="hero-node" style="border-color:var(--purple);color:var(--purple);top:65%;right:8%;animation-delay:-9s;">interactive</div>
+    <div class="hero-node" style="border-color:var(--blue);color:var(--blue);top:80%;left:18%;animation-delay:-12s;">source-linked</div>
+    <div class="hero-node" style="border-color:var(--green);color:var(--green);top:35%;left:85%;animation-delay:-2s;">deep analysis</div>
+    <div class="hero-node" style="border-color:var(--gold);color:var(--gold);top:78%;right:20%;animation-delay:-7s;">multi-agent</div>
+    <div class="hero-node" style="border-color:var(--purple);color:var(--purple);top:15%;left:60%;animation-delay:-14s;">visualization</div>
+    <div class="hero-node" style="border-color:var(--blue);color:var(--blue);top:45%;left:3%;animation-delay:-4s;">orchestration</div>
+    <div class="hero-node" style="border-color:var(--green);color:var(--green);top:88%;left:55%;animation-delay:-10s;">zero config</div>
+  </div>
+
+  <div class="hero-content">
+    <h1>Turn any codebase into an <span class="accent">interactive knowledge experience</span></h1>
+    <p class="hero-sub">
+      AI agents spend hours analyzing your code &mdash; reading every file, tracing every dependency, understanding architecture at depth. The result: a <em>structured knowledge graph</em> and a visual presentation you can explore.
+    </p>
+    <div class="hero-ctas">
+      <a href="#examples" class="btn btn-primary">See Examples</a>
+      <a href="#suggest" class="btn btn-secondary">Suggest a Project</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ HOW IT WORKS ══════════════ -->
+<section id="how-it-works">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">How It Works</div>
+      <h2 class="section-title">From repository to interactive presentation</h2>
+      <p class="section-desc">A multi-stage AI pipeline that goes far beyond surface-level code summaries.</p>
+    </div>
+
+    <div class="pipeline reveal">
+      <!-- Stage 1: Input -->
+      <div class="pipeline-stage">
+        <div class="pipeline-icon" style="border-color:var(--text-dim);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--text-dim)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+          </svg>
+        </div>
+        <div class="pipeline-stage-label">Repository</div>
+        <div class="pipeline-stage-desc">Any Git repo, any language</div>
+      </div>
+
+      <!-- Arrow 1 -->
+      <div class="pipeline-arrow">
+        <div class="pipeline-arrow-line">
+          <div class="pipeline-dot" style="animation-delay:0s;"></div>
+        </div>
+      </div>
+
+      <!-- Stage 2: AI Agents -->
+      <div class="pipeline-stage">
+        <div class="pipeline-icon" style="border-color:var(--green);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+          </svg>
+        </div>
+        <div class="pipeline-stage-label">AI Agents</div>
+        <div class="pipeline-stage-desc">Multi-agent deep analysis over hours</div>
+      </div>
+
+      <!-- Arrow 2 -->
+      <div class="pipeline-arrow">
+        <div class="pipeline-arrow-line">
+          <div class="pipeline-dot" style="animation-delay:-1s;"></div>
+        </div>
+      </div>
+
+      <!-- Stage 3: Knowledge Graph -->
+      <div class="pipeline-stage">
+        <div class="pipeline-icon" style="border-color:var(--blue);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/>
+            <line x1="8.5" y1="7.5" x2="15.5" y2="16.5"/><line x1="15.5" y1="7.5" x2="8.5" y2="16.5"/>
+            <line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/>
+          </svg>
+        </div>
+        <div class="pipeline-stage-label">Knowledge Graph</div>
+        <div class="pipeline-stage-desc">Schema-validated nodes &amp; edges</div>
+      </div>
+
+      <!-- Arrow 3 -->
+      <div class="pipeline-arrow">
+        <div class="pipeline-arrow-line">
+          <div class="pipeline-dot" style="animation-delay:-2s;"></div>
+        </div>
+      </div>
+
+      <!-- Stage 4: Presentation -->
+      <div class="pipeline-stage">
+        <div class="pipeline-icon" style="border-color:var(--gold);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+        </div>
+        <div class="pipeline-stage-label">Presentation</div>
+        <div class="pipeline-stage-desc">Interactive visual exploration</div>
+      </div>
+    </div>
+
+    <!-- Pipeline inline SVG diagram -->
+    <div class="reveal" style="margin-top:56px;">
+      <svg viewBox="0 0 800 260" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:800px;display:block;margin:0 auto;">
+        <defs>
+          <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <marker id="a-blue" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="7" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 3.5L0 7z" fill="#58a6ff"/></marker>
+        </defs>
+        <rect width="800" height="260" fill="#161b22" rx="12"/>
+
+        <!-- Raw Code -->
+        <rect x="30" y="30" width="160" height="200" rx="8" fill="#0d1117" stroke="#30363d"/>
+        <text x="110" y="22" text-anchor="middle" font-size="11" fill="#8b949e" font-family="Segoe UI, system-ui, sans-serif">Source Code</text>
+        <text x="45" y="60" font-size="11" fill="#ff7b72" font-family="Consolas, monospace">class</text>
+        <text x="80" y="60" font-size="11" fill="#ffa657" font-family="Consolas, monospace"> UserAuth</text>
+        <text x="45" y="82" font-size="11" fill="#8b949e" font-family="Consolas, monospace">  def login()</text>
+        <text x="45" y="104" font-size="11" fill="#8b949e" font-family="Consolas, monospace">  def verify()</text>
+        <text x="45" y="126" font-size="11" fill="#8b949e" font-family="Consolas, monospace">  def token()</text>
+        <text x="45" y="156" font-size="11" fill="#ff7b72" font-family="Consolas, monospace">class</text>
+        <text x="80" y="156" font-size="11" fill="#ffa657" font-family="Consolas, monospace"> Database</text>
+        <text x="45" y="178" font-size="11" fill="#8b949e" font-family="Consolas, monospace">  def query()</text>
+        <text x="45" y="200" font-size="11" fill="#8b949e" font-family="Consolas, monospace">  def migrate()</text>
+
+        <!-- Arrow -->
+        <line x1="205" y1="130" x2="290" y2="130" stroke="#58a6ff" stroke-width="2" marker-end="url(#a-blue)"/>
+        <text x="248" y="120" text-anchor="middle" font-size="10" fill="#58a6ff" font-family="Segoe UI, system-ui, sans-serif">AI agents</text>
+        <text x="248" y="148" text-anchor="middle" font-size="10" fill="#58a6ff" font-family="Segoe UI, system-ui, sans-serif">analyze</text>
+
+        <!-- Knowledge Graph -->
+        <text x="520" y="22" text-anchor="middle" font-size="11" fill="#58a6ff" font-family="Segoe UI, system-ui, sans-serif">Knowledge Graph</text>
+
+        <circle cx="400" cy="90" r="28" fill="#0d1117" stroke="#58a6ff" stroke-width="2" filter="url(#glow)"/>
+        <text x="400" y="87" text-anchor="middle" font-size="11" fill="#58a6ff" font-weight="bold" font-family="Segoe UI, system-ui, sans-serif">UserAuth</text>
+        <text x="400" y="101" text-anchor="middle" font-size="9" fill="#8b949e" font-family="Segoe UI, system-ui, sans-serif">module</text>
+
+        <circle cx="340" cy="195" r="22" fill="#0d1117" stroke="#ffc858" stroke-width="1.5"/>
+        <text x="340" y="193" text-anchor="middle" font-size="10" fill="#ffc858" font-family="Segoe UI, system-ui, sans-serif">login</text>
+        <text x="340" y="205" text-anchor="middle" font-size="8" fill="#8b949e" font-family="Segoe UI, system-ui, sans-serif">method</text>
+
+        <circle cx="460" cy="195" r="22" fill="#0d1117" stroke="#00ff88" stroke-width="1.5"/>
+        <text x="460" y="193" text-anchor="middle" font-size="10" fill="#00ff88" font-family="Segoe UI, system-ui, sans-serif">verify</text>
+        <text x="460" y="205" text-anchor="middle" font-size="8" fill="#8b949e" font-family="Segoe UI, system-ui, sans-serif">method</text>
+
+        <circle cx="555" cy="110" r="28" fill="#0d1117" stroke="#d2a8ff" stroke-width="2"/>
+        <text x="555" y="107" text-anchor="middle" font-size="11" fill="#d2a8ff" font-weight="bold" font-family="Segoe UI, system-ui, sans-serif">Database</text>
+        <text x="555" y="121" text-anchor="middle" font-size="9" fill="#8b949e" font-family="Segoe UI, system-ui, sans-serif">module</text>
+
+        <line x1="385" y1="115" x2="350" y2="175" stroke="#ffc858" stroke-width="1.2" marker-end="url(#a-blue)"/>
+        <line x1="415" y1="115" x2="450" y2="175" stroke="#00ff88" stroke-width="1.2" marker-end="url(#a-blue)"/>
+        <line x1="428" y1="92" x2="527" y2="105" stroke="#58a6ff" stroke-width="1.2" marker-end="url(#a-blue)"/>
+        <text x="480" y="85" text-anchor="middle" font-size="9" fill="#58a6ff" font-family="Segoe UI, system-ui, sans-serif">depends_on</text>
+
+        <!-- Arrow to output -->
+        <line x1="590" y1="130" x2="640" y2="130" stroke="#58a6ff" stroke-width="2" marker-end="url(#a-blue)"/>
+
+        <!-- Output -->
+        <rect x="655" y="50" width="120" height="160" rx="8" fill="#0d1117" stroke="#ffc858" stroke-width="1.5"/>
+        <text x="715" y="43" text-anchor="middle" font-size="11" fill="#ffc858" font-family="Segoe UI, system-ui, sans-serif">Presentation</text>
+        <rect x="668" y="65" width="94" height="12" rx="2" fill="#21262d"/>
+        <rect x="668" y="84" width="94" height="50" rx="2" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+        <circle cx="692" cy="104" r="6" fill="none" stroke="#58a6ff" stroke-width="1"/>
+        <circle cx="738" cy="100" r="4" fill="none" stroke="#00ff88" stroke-width="1"/>
+        <line x1="696" y1="100" x2="734" y2="99" stroke="#30363d" stroke-width="0.5"/>
+        <rect x="668" y="142" width="44" height="8" rx="1" fill="#21262d"/>
+        <rect x="668" y="156" width="94" height="6" rx="1" fill="#21262d" opacity="0.5"/>
+        <rect x="668" y="168" width="70" height="6" rx="1" fill="#21262d" opacity="0.3"/>
+
+        <!-- Bottom caption -->
+        <text x="400" y="250" text-anchor="middle" font-size="12" fill="#8b949e" font-family="Segoe UI, system-ui, sans-serif">Code becomes knowledge. Knowledge becomes explorable.</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ EXAMPLES ══════════════ -->
+<section id="examples">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">Examples</div>
+      <h2 class="section-title">Projects we've ingested</h2>
+      <p class="section-desc">Each project takes hours of AI analysis. Real examples coming soon &mdash; suggest yours below.</p>
+    </div>
+
+    <div class="examples-grid reveal" id="examples-grid">
+      <!-- Rendered by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ FEATURES ══════════════ -->
+<section id="features">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-label">Features</div>
+      <h2 class="section-title">Built for depth, not speed</h2>
+      <p class="section-desc">Every design decision optimizes for understanding quality over processing time.</p>
+    </div>
+
+    <div class="features-grid reveal">
+      <!-- Feature 1 -->
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(0,255,136,0.1);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+          </svg>
+        </div>
+        <h3>Multi-Agent Architecture</h3>
+        <p>Multiple AI agents collaborate &mdash; reading code, extracting relationships, validating facts, and generating visuals. No single-prompt shortcuts.</p>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(88,166,255,0.1);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+        </div>
+        <h3>Schema-Validated</h3>
+        <p>Every node and edge in the knowledge graph conforms to a strict JSON schema. Structured data, not free-form text.</p>
+      </div>
+
+      <!-- Feature 3 -->
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(210,168,255,0.1);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+        </div>
+        <h3>Source-Linked</h3>
+        <p>Every fact traces back to the exact file and line. Click any node to see the code that produced it.</p>
+      </div>
+
+      <!-- Feature 4 -->
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(255,200,88,0.1);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+        </div>
+        <h3>Interactive Visual Output</h3>
+        <p>The output is a self-contained HTML presentation with diagrams, timelines, and explorable knowledge graphs. No login required.</p>
+      </div>
+
+      <!-- Feature 5 -->
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(88,166,255,0.1);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+          </svg>
+        </div>
+        <h3>Deep Analysis</h3>
+        <p>Agents spend hours, not seconds. They read every file, trace call graphs, understand architecture patterns, and map domain concepts.</p>
+      </div>
+
+      <!-- Feature 6 -->
+      <div class="feature-card">
+        <div class="feature-icon" style="background:rgba(0,255,136,0.1);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+            <line x1="4" y1="22" x2="4" y2="15"/>
+          </svg>
+        </div>
+        <h3>Zero Dependencies</h3>
+        <p>Output is a single static HTML file. No frameworks, no build tools, no servers. Open it in any browser and explore.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ SUGGEST ══════════════ -->
+<section id="suggest">
+  <div class="container">
+    <div class="suggest-box reveal">
+      <h2>Have a project in mind?</h2>
+      <p>We're looking for interesting open-source codebases to ingest. Suggest a repository and we'll turn it into a knowledge experience.</p>
+      <a href="mailto:suggest@knowledge-tools.ai?subject=Project%20Suggestion%20for%20knowledge-tools.ai&body=Repository%20URL%3A%20%0A%0AWhy%20this%20project%20is%20interesting%3A%20%0A" class="btn btn-primary">
+        Suggest a Project
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ FOOTER ══════════════ -->
+<footer class="footer">
+  <div class="container">
+    <p style="margin-bottom:6px;">
+      <strong style="color:var(--text);">knowledge-tools.ai</strong> &mdash; AI-powered code understanding
+    </p>
+    <p>&copy; 2026 knowledge-tools.ai. Built with the same tools we showcase.</p>
+  </div>
+</footer>
+
+<script>
+/* ── Example Cards Data ── */
+const EXAMPLES = [
+  {
+    id: "example-1",
+    status: "placeholder",
+    input: {
+      name: "Open-Source RISC-V Core",
+      url: null,
+      language: "SystemVerilog",
+      description: "A full RISC-V CPU implementation with pipeline stages, caches, and debug support.",
+      stats: { files: "~200", lines: "~45k" }
+    },
+    output: { nodes: 0, edges: 0, diagrams: 0, presentationUrl: null },
+    accentColor: "var(--blue)"
+  },
+  {
+    id: "example-2",
+    status: "placeholder",
+    input: {
+      name: "Web Framework Internals",
+      url: null,
+      language: "Python",
+      description: "Request routing, middleware chains, template engine, and ORM — all mapped to a navigable knowledge graph.",
+      stats: { files: "~350", lines: "~80k" }
+    },
+    output: { nodes: 0, edges: 0, diagrams: 0, presentationUrl: null },
+    accentColor: "var(--green)"
+  },
+  {
+    id: "example-3",
+    status: "placeholder",
+    input: {
+      name: "Your Project Here",
+      url: null,
+      language: "Any",
+      description: "Suggest an open-source project and we'll run it through the pipeline. The results appear here.",
+      stats: { files: "?", lines: "?" }
+    },
+    output: { nodes: 0, edges: 0, diagrams: 0, presentationUrl: null },
+    accentColor: "var(--gold)"
+  }
+];
+
+/* ── Render Examples ── */
+function renderExamples() {
+  const grid = document.getElementById('examples-grid');
+  grid.innerHTML = EXAMPLES.map(ex => {
+    const isPlaceholder = ex.status === 'placeholder';
+    const isCta = ex.input.name === 'Your Project Here';
+    const statusClass = ex.status === 'complete' ? 'status-complete'
+                      : ex.status === 'in-progress' ? 'status-in-progress'
+                      : 'status-placeholder';
+    const statusLabel = ex.status === 'complete' ? 'Complete'
+                      : ex.status === 'in-progress' ? 'In Progress'
+                      : 'Coming Soon';
+
+    return `
+      <div class="example-card ${isPlaceholder ? 'placeholder' : ''}">
+        <div class="card-accent" style="background:${ex.accentColor};${isPlaceholder ? 'opacity:0.4;' : ''}"></div>
+        <span class="card-status ${statusClass}">${statusLabel}</span>
+        <div class="card-name">${ex.input.name}</div>
+        <div class="card-desc">${ex.input.description}</div>
+        <div class="card-meta">
+          <span><strong>${ex.input.language}</strong></span>
+          <span>${ex.input.stats.files} files</span>
+          <span>${ex.input.stats.lines} lines</span>
+        </div>
+        ${ex.status === 'complete' ? `
+          <div class="card-divider"></div>
+          <div class="card-output-label">Output</div>
+          <div class="card-stats">
+            <div class="card-stat">
+              <div class="card-stat-value counter" data-target="${ex.output.nodes}">${ex.output.nodes}</div>
+              <div class="card-stat-label">Nodes</div>
+            </div>
+            <div class="card-stat">
+              <div class="card-stat-value counter" data-target="${ex.output.edges}">${ex.output.edges}</div>
+              <div class="card-stat-label">Edges</div>
+            </div>
+            <div class="card-stat">
+              <div class="card-stat-value counter" data-target="${ex.output.diagrams}">${ex.output.diagrams}</div>
+              <div class="card-stat-label">Diagrams</div>
+            </div>
+          </div>
+          ${ex.output.presentationUrl ? `<a href="${ex.output.presentationUrl}" class="card-link" target="_blank">Explore Presentation &rarr;</a>` : ''}
+        ` : isCta ? `
+          <div class="card-divider"></div>
+          <a href="#suggest" class="card-cta-text">Suggest this project &rarr;</a>
+        ` : `
+          <div class="card-divider"></div>
+          <div class="card-output-label">Output</div>
+          <div class="card-stats" style="opacity:0.3;">
+            <div class="card-stat"><div class="card-stat-value">—</div><div class="card-stat-label">Nodes</div></div>
+            <div class="card-stat"><div class="card-stat-value">—</div><div class="card-stat-label">Edges</div></div>
+            <div class="card-stat"><div class="card-stat-value">—</div><div class="card-stat-label">Diagrams</div></div>
+          </div>
+        `}
+      </div>
+    `;
+  }).join('');
+}
+
+renderExamples();
+
+/* ── Scroll Reveal via IntersectionObserver ── */
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+/* ── Counter Animation ── */
+function animateCounters() {
+  document.querySelectorAll('.counter[data-target]').forEach(counter => {
+    const target = parseInt(counter.dataset.target);
+    if (isNaN(target) || target === 0) return;
+    if (counter.dataset.animated) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !counter.dataset.animated) {
+          counter.dataset.animated = 'true';
+          let current = 0;
+          const increment = Math.max(1, Math.floor(target / 60));
+          const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+              current = target;
+              clearInterval(timer);
+            }
+            counter.textContent = current.toLocaleString();
+          }, 16);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    observer.observe(counter);
+  });
+}
+
+animateCounters();
+
+/* ── Smooth scroll for nav links (close mobile menu) ── */
+document.querySelectorAll('.nav-links a').forEach(link => {
+  link.addEventListener('click', () => {
+    document.querySelector('.nav-links').classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>
